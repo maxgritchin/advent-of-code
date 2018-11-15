@@ -38,36 +38,39 @@ defmodule GridGenerator do
   """
 
   def produce(n) when n <= 0, do: []
-  def produce(1), do: [%{:row => 0, :col => 0, :value => 1}]
+  def produce(1), do: %{[0,0] => 1}
   def produce(input_number) when is_integer(input_number) do
     # init
     list_of_numbers = Enum.to_list 2..input_number
     grid = produce(1)
     steps = []
+    start_position = [0,0]
     # get list of steps for the total count of numbers
-    generate_grid(grid, list_of_numbers, steps)
+    generate_grid(grid, list_of_numbers, steps, start_position)
   end
 
-  defp generate_grid(grid, [], _), do: grid
-  defp generate_grid(grid, numbers, []) do # generate steps fro next iteration
+  defp generate_grid(grid, [], _, last), do: [grid, last]
+  defp generate_grid(grid, numbers, [], last) do # generate steps fro next iteration
     # get steps for iteration
-    iteration_number = trunc(grid |> length() |> :math.sqrt())
+    iteration_number = trunc(Map.size(grid) |> :math.sqrt())
     steps = get_steps(iteration_number)
     # iterate
-    generate_grid(grid, numbers, steps)
+    generate_grid(grid, numbers, steps, last)
   end
-  defp generate_grid(grid, [num | numbers], [direction | steps]) do
+  defp generate_grid(grid, [num | numbers], [direction | steps], last) do
     # get last added value
-    [last | _] = grid
+    [row, col] = last
     # add new value
     new_value = case direction do
-      :up -> %{:row => last.row - 1, :col => last.col, :value => num}
-      :down -> %{:row => last.row + 1, :col => last.col, :value => num}
-      :right -> %{:row => last.row, :col => last.col + 1, :value => num}
-      :left -> %{:row => last.row, :col => last.col - 1, :value => num}
+      :up -> %{[row - 1, col] => num}
+      :down -> %{[row + 1, col] => num}
+      :right -> %{[row, col + 1] => num}
+      :left -> %{[row, col - 1] => num}
     end
+    # get calculated key
+    [key | _] = new_value |> Map.keys()
     # iterate to the next number
-    generate_grid([new_value | grid], numbers, steps)
+    generate_grid(Map.merge(new_value, grid), numbers, steps, key)
   end
 
   defp get_steps(count) when rem(count, 2) != 0 do # odd starts eitht right
@@ -90,37 +93,33 @@ defmodule StepsCounter do
   def calculate(number) when number <= 1, do: 0
   def calculate(number) do
     # produce grid
-    grid = GridGenerator.produce(number)
+    [grid, start_position] = GridGenerator.produce(number)
     # iterate until found 1
-    [last | _] = grid
-    start_position = %{:row => last.row, :col => last.col}
     iterate(start_position, grid, 0)
   end
 
-  defp iterate(%{:row => 0, :col => 0}, _, acc), do: acc # found 1 position. Acc = steps count
+  defp iterate([0,0], _, acc), do: acc # found 1 position. Acc = steps count
   defp iterate(position, grid, acc) do
-    # get neareast values
-    first = grid |> Enum.find(fn x -> x.row == get_next_index(position.row) and x.col == position.col end)
-    second = grid |> Enum.find(fn x -> x.row == position.row and x.col == get_next_index(position.col) end)
+    [row, col] = position
     # compare each one is smallest. This is the next position
-    next = compare_positions(first, second)
+    next = compare(grid, [get_next_index(row), col], [row, get_next_index(col)])
     # next step
-    iterate(%{:row => next.row, :col => next.col}, grid, acc + 1)
+    iterate(next, grid, acc + 1)
   end
 
   defp get_next_index(index) when index == 0, do: 0
   defp get_next_index(index) when index < 0, do: index + 1
   defp get_next_index(index) when index > 0, do: index - 1
 
-  defp compare_positions(a, b) do
-    IO.inspect binding()
+  defp compare(grid, a, b) do
     cond do
-      a == nil -> b
-      b == nil -> a
-      a.value <= b.value -> a
-      a.value > b.value -> b
+      grid[a] == nil -> b
+      grid[b] == nil -> a
+      grid[a] <= grid[b] -> a
+      grid[a] > grid[b] -> b
     end
   end
 end
 
-#StepsCounter.calculate(325489)|> IO.inspect()
+#GridGenerator.produce(23) |> IO.inspect()
+StepsCounter.calculate(325489)|> IO.inspect()
