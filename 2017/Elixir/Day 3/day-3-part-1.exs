@@ -73,7 +73,7 @@ defmodule GridGenerator do
     generate_grid(Map.merge(new_value, grid), numbers, steps, key)
   end
 
-  defp get_steps(count) when rem(count, 2) != 0 do # odd starts eitht right
+  defp get_steps(count) when rem(count, 2) != 0 do # odd starts with right
     # get list of steps
     ups = List.duplicate(:up, count)
     lefts = List.duplicate(:left, count)

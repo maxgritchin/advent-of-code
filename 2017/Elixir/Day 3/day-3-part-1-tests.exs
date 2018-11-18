@@ -1,6 +1,6 @@
-defmodule Day3Tests do
+defmodule Day3Part1Tests do
   use ExUnit.Case
-  Code.require_file("day-3.exs")
+  Code.require_file("day-3-part-1.exs")
 
   test "steps count when start from 1 is equal to 0" do
     assert StepsCounter.calculate(1) == 0
