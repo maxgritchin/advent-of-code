@@ -16,7 +16,7 @@ The system's full passphrase list is available as your puzzle input. How many pa
 
 defmodule Analizer do
   @moduledoc """
-  Phrazes analizer
+  Phrases analizer
 
   ## Overview
 
