@@ -1,26 +1,7 @@
-_ = """
+_="""
+  Day 6
 
-The debugger would like to know how many redistributions can be done before a blocks-in-banks configuration is produced that has been seen before.
-
-## Example
-
-The banks start with 0, 2, 7, and 0 blocks. The third bank has the most blocks, so it is chosen for redistribution.
-
-Starting with the next bank (the fourth bank) and then continuing to the first bank, the second bank, and so on, the 7 blocks are spread out over the memory banks. The fourth, first, and second banks get two blocks each, and the third bank gets one back. The final result looks like this: 2 4 1 2.
-
-Next, the second bank is chosen because it contains the most blocks (four). Because there are four memory banks, each gets one block. The result is: 3 1 2 3.
-
-Now, there is a tie between the first and fourth memory banks, both of which have three blocks. The first bank wins the tie, and its three blocks are distributed evenly over the other three banks, leaving it with none: 0 2 3 4.
-
-The fourth bank is chosen, and its four blocks are distributed such that each of the four banks receives one: 1 3 4 1.
-
-The third bank is chosen, and the same thing happens: 2 4 1 2.
-
-At this point, we've reached a state we've seen before: 2 4 1 2 was already seen. The infinite loop is detected after the fifth block redistribution cycle, and so the answer in this example is 5.
-
-## Task
-
-Given the initial block counts in your puzzle input, how many redistribution cycles must be completed before a configuration is produced that has been seen before?
+  Input data : https://adventofcode.com/2017/day/6/input
 """
 
 defmodule Banks do
@@ -30,10 +11,10 @@ defmodule Banks do
     |> redistribute()
   end
   def redistribute(banks) when is_list(banks) do
-    banks
+    result = banks
     |> convert_to_array()
     |> process()
-    |> IO.inspect(label: "Count of redistribution processes ")
+    |> IO.inspect(label: "Result ")
   end
 
   defp convert_to_array(banks) do
@@ -50,11 +31,11 @@ defmodule Banks do
     state |> Enum.max_by(fn {_idx, val} -> val end)
   end
 
-  defp process(state), do: process(state, MapSet.new(), false)
-  defp process(_state, seen, true), do: MapSet.size(seen)
+  defp process(state), do: process(state, Map.new(), false)
+  defp process(state, seen, true), do: {Map.size(seen),Map.size(seen) - seen[state]}
   defp process(state, seen, _done) do
     # add as seen
-    seen = seen |> MapSet.put(state)
+    seen = seen |> Map.put(state, Map.size(seen))
     # find bank to redistribute
     bank_to_redistribute = state |> find_max_bank()
     #|> IO.inspect(label: "Bank to redistribute ")
@@ -63,8 +44,11 @@ defmodule Banks do
     |> make(bank_to_redistribute)
     #|> IO.inspect(label: "New state ")
     # recursion
-    #IO.gets("continue...")
-    process(new_state, seen, MapSet.member?(seen, new_state))
+    process(new_state, seen, already_seen?(seen, new_state))
+  end
+
+  defp already_seen?(seen_map, state) do
+    seen_map |> Map.has_key?(state)
   end
 
   defp make(state, {index, blocks}) do
@@ -116,7 +100,20 @@ defmodule Banks do
   end
 end
 
-"4	10	4	1	8	4	9	14	5	1	14	15	0	15	3	5"
-|> Banks.redistribute("\t")
+ExUnit.start()
 
-# 12841
+defmodule Part1Tests do
+  use ExUnit.Case
+
+  test "[0, 2, 7, 0] takes 5 cycles" do
+    assert {5, _} = Banks.redistribute("0 2 7 0", " ")
+  end
+end
+
+defmodule Part2Tests do
+  use ExUnit.Case
+
+  test "[0, 2, 7, 0] takes 4 cycles from the seen value" do
+    assert {_, 4} = Banks.redistribute("0 2 7 0", " ")
+  end
+end
