@@ -9,7 +9,7 @@ defmodule Calculator do
   end
 
   def refresh_values([], storage), do: storage
-  def refresh_values([operation = %Operation{} | rest], storage) when is_map(storage) do
+  def refresh_values([operation = %Operation{} | rest], storage) do
     # add regesters from operation
     new_storage = storage
     |> add_register(operation.register)
@@ -19,12 +19,14 @@ defmodule Calculator do
     refresh_values(rest, new_storage)
   end
 
-  defp add_register(storage, reg_name) do
-    if !Map.has_key?(storage, reg_name), do: Map.put_new(storage, reg_name, 0), else: storage
+  defp add_register({alloc, registers}, reg_name) do
+    new_registers = if !Map.has_key?(registers, reg_name), do: Map.put_new(registers, reg_name, 0), else: registers
+
+    {alloc, new_registers}
   end
 
-  defp should_make_operation(condition = %Condition{}, storage) do
-    curr_value = Map.get(storage, condition.register)
+  defp should_make_operation(condition = %Condition{}, {_, registers}) do
+    curr_value = Map.get(registers, condition.register)
     case condition.operator do
       "==" -> curr_value == condition.value
       "!=" -> curr_value != condition.value
@@ -37,14 +39,20 @@ defmodule Calculator do
 
   defp make_operation(storage, operation = %Operation{}) do
     if operation.condition |> should_make_operation(storage) do
-      case operation.make do
+      {alloc, registers} = storage
+      new_registers = case operation.make do
         "inc" ->
-          Map.update!(storage, operation.register, fn v -> v + operation.value end)
+          Map.update!(registers, operation.register, fn v -> v + operation.value end)
         "dec" ->
-          Map.update!(storage, operation.register, fn v -> v - operation.value end)
+          Map.update!(registers, operation.register, fn v -> v - operation.value end)
         _ ->
           storage
       end
+      # update allocation
+      last_reg_value = Map.get(new_registers, operation.register)
+      new_alloc = if alloc < last_reg_value, do: last_reg_value, else: alloc
+      # return
+      {new_alloc, new_registers}
     else
       storage
     end
@@ -70,7 +78,7 @@ defmodule CalculatorTests do
     }]
 
     # act
-    registers = Calculator.refresh_values(operations, %{})
+    {_, registers} = Calculator.refresh_values(operations, {0, %{}})
 
     # assert
     assert Map.size(registers) == 2
@@ -124,12 +132,13 @@ defmodule CalculatorTests do
     ]
 
     # act
-    registers = Calculator.refresh_values(operations, %{})
+    {alloc, registers} = Calculator.refresh_values(operations, {0, %{}})
 
     # assert
     assert Map.size(registers) == 3
     assert registers |> Map.get("a") == 1
     assert registers |> Map.get("b") == 0
     assert registers |> Map.get("c") == -10
+    assert alloc == 10
   end
 end

@@ -5,10 +5,10 @@ defmodule RegisterWorker do
   Code.require_file(Path.join(__DIR__, "Calculator.exs"))
 
   def get_lagest_value(input) when is_bitstring(input) do
-    input
+    {alloc, registers} = input
     |> get_registers()
-    #|> IO.inspect(label: "-- registers")
-    |> Enum.max_by(fn {_, v} -> v end)
+
+    {alloc, registers |> Enum.max_by(fn {_, v} -> v end)}
   end
 
   def parse(data) when is_bitstring(data) do
@@ -37,14 +37,14 @@ defmodule RegisterWorker do
   def get_registers(data) when is_bitstring(data) do
     data
     |> parse()
-    |> Calculator.refresh_values(Map.new())
+    |> Calculator.refresh_values({0, Map.new()})
   end
 end
 
-# part 1
+# calc the Day
 File.read!(Path.join(__DIR__, "data.dat"))
 |> RegisterWorker.get_lagest_value()
-|> IO.inspect(label: "Part 1 result is ")
+|> IO.inspect(label: "Result is ")
 
 # TESTS
 ExUnit.start
@@ -76,7 +76,12 @@ defmodule RegisterWorkerTests do
       c dec -10 if a >= 1
       c inc -20 if c == 10
     "
+
+    # act
+    {alloc, register} = RegisterWorker.get_lagest_value(input)
+
     # assert
-    assert RegisterWorker.get_lagest_value(input) == {"a", 1}
+    assert register == {"a", 1}
+    assert alloc == 10
   end
 end
