@@ -2,6 +2,9 @@ _="""
   https://adventofcode.com/2017/day/9
 """
 defmodule Groups do
+  @ignore_regex ~r/(!.)/
+  @find_garbage ~r/<.*?>/
+
   @doc """
   Claculates the score value for groups in a string
 
@@ -52,11 +55,30 @@ defmodule Groups do
     |> remove_garbage_chars()
   end
 
+  @doc """
+  Calculation of the grabage characters count in the given string
+
+  ## Examples
+      iex>Groups.calc_garbage_chars!("<ab>")
+      2
+
+  """
+  def calc_garbage_chars!(data) do
+    data
+    |> remove_ignored_chars()
+    |> calc_garbage_chars()
+  end
+
   defp remove_ignored_chars(data) do
-    data |> String.replace(~r/(!.)/, "")
+    data |> String.replace(@ignore_regex, "")
   end
   defp remove_garbage_chars(data) do
-    data |> String.replace(~r/<.*?>/, "")
+    data |> String.replace(@find_garbage, "")
+  end
+  defp calc_garbage_chars(data) do
+    Regex.scan(@find_garbage, data)
+    |> List.flatten()
+    |> Enum.reduce(0, fn x, acc -> acc + String.length(x) - 2 end)
   end
 end
 
@@ -94,5 +116,15 @@ defmodule UnitTests do
     assert Groups.score!("{{<ab>},{<ab>},{<ab>},{<ab>}}") == {9, 5}
     assert Groups.score!("{{<!!>},{<!!>},{<!!>},{<!!>}}") == {9, 5}
     assert Groups.score!("{{<a!>},{<a!>},{<a!>},{<ab>}}") == {3, 2}
+  end
+
+  test "gets count of the garbage chars" do
+    assert Groups.calc_garbage_chars!("<>") == 0
+    assert Groups.calc_garbage_chars!("<random characters>") == 17
+    assert Groups.calc_garbage_chars!("<<<<>") == 3
+    assert Groups.calc_garbage_chars!("<{!>}>") == 2
+    assert Groups.calc_garbage_chars!("<!!>") == 0
+    assert Groups.calc_garbage_chars!("<!!!>>") == 0
+    assert Groups.calc_garbage_chars!("<{oi!a,<{i<a>") == 9
   end
 end
