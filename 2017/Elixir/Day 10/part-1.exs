@@ -1,4 +1,4 @@
-Code.require_file(Path.join(__DIR__, "Base.exs"))
+Code.require_file(Path.join(__DIR__, "KnotHash.exs"))
 
 lengths = "187,254,0,81,169,219,1,190,19,102,255,56,46,32,2,216"
 |> String.split(",")

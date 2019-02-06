@@ -15,6 +15,13 @@ defmodule CircularList do
   end
 
   @doc """
+  Get values from map in the order
+  """
+  def get_values(arr) when is_map(arr) do
+    1..Map.size(arr) |> Enum.map(fn idx -> Map.get(arr, idx) end)
+  end
+
+  @doc """
   Get the index from the given position with shift
 
   ## Examples
@@ -24,7 +31,9 @@ defmodule CircularList do
   def get_index(_list, position, shift) when shift <= 0, do: position
   def get_index(list, position, shift) do
     cond do
-      Map.size(list) < (position + shift) ->
+      (shift > Map.size(list)) ->
+        get_index(list, position, rem(shift, Map.size(list)))
+      (position + shift) > Map.size(list) ->
         (position + shift) - Map.size(list)
       true ->
         position + shift
@@ -41,6 +50,7 @@ defmodule CircularList do
   def get_slice(_list, _from, size) when size <= 0, do: []
   def get_slice(list, from, size) when from <= 0, do: get_slice(list, 1, size, [])
   def get_slice(list, from, size), do: get_slice(list, from, size, [])
+
   defp get_slice(_list, _from, size, result) when size == 0, do: result |> Enum.reverse()
   defp get_slice(list, from, size, result) do
     cond do
@@ -95,6 +105,8 @@ defmodule CircularListUnitTests do
   test "get the next element index" do
     assert CircularList.get_index(%{1 => 10, 2 => 20, 3 => 30}, 2, 1) == 3
     assert CircularList.get_index(%{1 => 10, 2 => 20, 3 => 30}, 3, 2) == 2
+    assert CircularList.get_index(%{1 => 10, 2 => 20, 3 => 30}, 3, 3) == 3
+    assert CircularList.get_index(%{1 => 10, 2 => 20, 3 => 30}, 2, 10) == 3
   end
 
   test "update elements values into circular list" do
