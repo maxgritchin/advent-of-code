@@ -8,5 +8,5 @@ Code.require_file(Path.join(__DIR__, "HexGrid.exs"))
 File.read!(Path.join(__DIR__, "input.dat"))
 |> String.trim
 |> String.split(",")
-|> HexGrid.fewest_number_of_steps
+|> HexGrid.furthers_number_of_steps
 |> IO.inspect(label: "Result")
